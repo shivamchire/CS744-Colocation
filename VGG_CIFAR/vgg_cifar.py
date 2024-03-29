@@ -5,6 +5,7 @@ import torchvision.transforms as transforms
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.models as models
+from tqdm import tqdm
 
 def train_vgg19_cifar10(num_epochs=5, lr=0.001, momentum=0.9):
     # Check if CUDA is available
@@ -41,7 +42,7 @@ def train_vgg19_cifar10(num_epochs=5, lr=0.001, momentum=0.9):
     for epoch in range(num_epochs):  # Loop over the dataset multiple times
 
         running_loss = 0.0
-        for i, data in enumerate(trainloader, 0):
+        for i, data in tqdm(enumerate(trainloader, 0), total=len(trainloader)):
             # Get the inputs; data is a list of [inputs, labels]
             inputs, labels = data[0].to(device), data[1].to(device)
 
