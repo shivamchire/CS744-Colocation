@@ -68,7 +68,7 @@ def train_vgg19_cifar10(num_epochs=5, lr=0.001, momentum=0.9):
     correct = 0
     total = 0
     with torch.no_grad():
-        for data in testloader:
+        for data in tqdm(testloader, total=len(testloader)):
             images, labels = data[0].to(device), data[1].to(device)
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
