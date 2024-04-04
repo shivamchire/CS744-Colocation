@@ -5,6 +5,7 @@ import math
 import itertools
 import datetime
 import time
+from tqdm import tqdm
 
 import torchvision.transforms as transforms
 from torchvision.utils import save_image, make_grid
@@ -157,7 +158,7 @@ def sample_images(batches_done):
 
 prev_time = time.time()
 for epoch in range(opt.epoch, opt.n_epochs):
-    for i, batch in enumerate(dataloader):
+    for i, batch in tqdm(enumerate(dataloader), total=len(dataloader)):
 
         # Set model input
         real_A = Variable(batch["A"].type(Tensor))
