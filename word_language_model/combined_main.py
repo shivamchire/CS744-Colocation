@@ -9,7 +9,21 @@ import torch.onnx
 from tqdm import tqdm
 import data
 import model as mdl
+eval_batch_size = 10
+criterion = nn.NLLLoss()
+def repackage_hidden(h):
+    """Wraps hidden states in new Tensors, to detach them from their history."""
 
+    if isinstance(h, torch.Tensor):
+        return h.detach()
+    else:
+        return tuple(repackage_hidden(v) for v in h)
+
+def get_batch(args, source, i):
+    seq_len = min(args.bptt, len(source) - 1 - i)
+    data = source[i:i+seq_len]
+    target = source[i+1:i+1+seq_len].view(-1)
+    return data, target
 
 def batchify(data, bsz, device):
     # Work out how cleanly we can divide the dataset into bsz parts.
@@ -20,7 +34,7 @@ def batchify(data, bsz, device):
     data = data.view(bsz, -1).t().contiguous()
     return data.to(device)
 
-def evaluate(data_source):
+def evaluate(args, data_source, model, corpus):
     # Turn on evaluation mode which disables dropout.
     model.eval()
     total_loss = 0.
@@ -29,7 +43,7 @@ def evaluate(data_source):
         hidden = model.init_hidden(eval_batch_size)
     with torch.no_grad():
         for i in range(0, data_source.size(0) - 1, args.bptt):
-            data, targets = get_batch(data_source, i)
+            data, targets = get_batch(args, data_source, i)
             if args.model == 'Transformer':
                 output = model(data)
                 output = output.view(-1, ntokens)
@@ -60,7 +74,7 @@ def train_model(args, model, corpus, device):
             
             data_loader = tqdm(enumerate(range(0, train_data.size(0) - 1, args.bptt)), total=len(train_data) // args.bptt)
             for batch, i in data_loader:
-                data, targets = get_batch(train_data, i)
+                data, targets = get_batch(args, train_data, i)
                 model.zero_grad()
                 if args.model == 'Transformer':
                     output = model(data)
@@ -86,7 +100,7 @@ def train_model(args, model, corpus, device):
                     start_time = time.time()
                 if args.dry_run:
                     break
-            val_loss = evaluate(val_data)
+            val_loss = evaluate(args, val_data, model, corpus)
             print('-' * 89)
             print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
                     'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
@@ -105,16 +119,16 @@ def train_model(args, model, corpus, device):
         model = torch.load(f)
         if args.model in ['RNN_TANH', 'RNN_RELU', 'LSTM', 'GRU']:
             model.rnn.flatten_parameters()
-    test_loss = evaluate(test_data)
+    test_loss = evaluate(args, test_data, model, corpus)
     print('=' * 89)
     print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
         test_loss, math.exp(test_loss)))
     print('=' * 89)
     if len(args.onnx_export) > 0:
-        export_onnx(args.onnx_export, device, batch_size=1, seq_len=args.bptt)
+        export_onnx(args.onnx_export, device, model, batch_size=1, seq_len=args.bptt)
 
 
-def export_onnx(path, device, batch_size, seq_len):
+def export_onnx(path, device, model, batch_size, seq_len):
     print('The model is also exported in ONNX format at {}.'.format(os.path.realpath(args.onnx_export)))
     model.eval()
     dummy_input = torch.LongTensor(seq_len * batch_size).zero_().view(-1, batch_size).to(device)
@@ -206,6 +220,14 @@ def main():
                         help='the number of heads in the encoder/decoder of the transformer model')
     parser.add_argument('--dry-run', action='store_true',
                         help='verify the code and the model')
+    parser.add_argument('--temperature', type=float, default=1.0,
+                    help='temperature - higher will increase diversity')
+    parser.add_argument('--checkpoint', type=str, default='./model.pt',
+                    help='model checkpoint to use')
+    parser.add_argument('--outf', type=str, default='generated.txt',
+                    help='output file for generated text')
+    parser.add_argument('--words', type=int, default='1000',
+                    help='number of words to generate')
     args = parser.parse_args()
 
     # Set the random seed manually for reproducibility.
