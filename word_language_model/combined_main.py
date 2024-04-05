@@ -8,10 +8,10 @@ import torch.nn as nn
 import torch.onnx
 from tqdm import tqdm
 import data
-import model
+import model 
 
 
-def batchify(data, bsz):
+def batchify(data, bsz, device):
     # Work out how cleanly we can divide the dataset into bsz parts.
     nbatch = data.size(0) // bsz
     # Trim off any extra elements that wouldn't cleanly fit (remainders).
@@ -40,9 +40,9 @@ def evaluate(data_source):
     return total_loss / (len(data_source) - 1)
 
 def train_model(args, model, corpus, device):
-    train_data = batchify(corpus.train, args.batch_size)
-    val_data = batchify(corpus.valid, eval_batch_size)
-    test_data = batchify(corpus.test, eval_batch_size)
+    train_data = batchify(corpus.train, args.batch_size, device)
+    val_data = batchify(corpus.valid, eval_batch_size, device)
+    test_data = batchify(corpus.test, eval_batch_size, device)
 
     criterion = nn.NLLLoss()
     lr = args.lr
@@ -111,89 +111,10 @@ def train_model(args, model, corpus, device):
         test_loss, math.exp(test_loss)))
     print('=' * 89)
     if len(args.onnx_export) > 0:
-        export_onnx(args.onnx_export, batch_size=1, seq_len=args.bptt)
+        export_onnx(args.onnx_export, batch_size=1, seq_len=args.bptt, device)
 
 
-def train(args):
-    ###############################################################################
-    # Load data
-    ###############################################################################
-
-    corpus = data.Corpus(args.data)
-
-    def batchify(data, bsz):
-        # Work out how cleanly we can divide the dataset into bsz parts.
-        nbatch = data.size(0) // bsz
-        # Trim off any extra elements that wouldn't cleanly fit (remainders).
-        data = data.narrow(0, 0, nbatch * bsz)
-        # Evenly divide the data across the bsz batches.
-        data = data.view(bsz, -1).t().contiguous()
-        return data.to(device)
-
-    eval_batch_size = 10
-    train_data = batchify(corpus.train, args.batch_size)
-    val_data = batchify(corpus.valid, eval_batch_size)
-    test_data = batchify(corpus.test, eval_batch_size)
-
-    ###############################################################################
-    # Build the model
-    ###############################################################################
-
-    ntokens = len(corpus.dictionary)
-    if args.model == 'Transformer':
-        model = model.TransformerModel(ntokens, args.emsize, args.nhead, args.nhid, args.nlayers, args.dropout).to(device)
-    else:
-        model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout, args.tied).to(device)
-
-    criterion = nn.NLLLoss()
-
-    # Turn on training mode which enables dropout.
-    model.train()
-    total_loss = 0.
-    start_time = time.time()
-    ntokens = len(corpus.dictionary)
-    if args.model != 'Transformer':
-        hidden = model.init_hidden(args.batch_size)
-    for batch, i in enumerate(range(0, train_data.size(0) - 1, args.bptt)):
-        data, targets = get_batch(train_data, i)
-        # Starting each batch, we detach the hidden state from how it was previously produced.
-        # If we didn't, the model would try backpropagating all the way to start of the dataset.
-        model.zero_grad()
-        if args.model == 'Transformer':
-            output = model(data)
-            output = output.view(-1, ntokens)
-        else:
-            hidden = repackage_hidden(hidden)
-            output, hidden = model(data, hidden)
-        loss = criterion(output, targets)
-        loss.backward()
-
-        # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
-        torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-        for p in model.parameters():
-            p.data.add_(p.grad, alpha=-lr)
-
-        total_loss += loss.item()
-
-        if batch % args.log_interval == 0 and batch > 0:
-            cur_loss = total_loss / args.log_interval
-            elapsed = time.time() - start_time
-
-            # Calculate iterations per second (IPS)
-            ips = (batch * args.batch_size) / elapsed
-
-            tqdm.write('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                        'loss {:5.2f} | ppl {:8.2f} | IPS {:6.2f}'.format(
-                epoch, batch, len(train_data) // args.bptt, lr,
-                elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss), ips))
-
-            total_loss = 0
-            start_time = time.time()
-        if args.dry_run:
-            break
-
-
-def export_onnx(path, batch_size, seq_len):
+def export_onnx(path, batch_size, seq_len, device):
     print('The model is also exported in ONNX format at {}.'.format(os.path.realpath(args.onnx_export)))
     model.eval()
     dummy_input = torch.LongTensor(seq_len * batch_size).zero_().view(-1, batch_size).to(device)
@@ -202,7 +123,7 @@ def export_onnx(path, batch_size, seq_len):
 
 
 # Inference script
-def generate(args):
+def generate(args, device):
     if args.temperature < 1e-3:
         parser.error("--temperature has to be greater or equal 1e-3.")
 
@@ -315,7 +236,7 @@ def main():
         train_model(args, model, corpus, device)
 
     elif args.job_type == 'inference':
-        generate(args)
+        generate(args, device)
 
 if __name__ == "__main__":
     main()
