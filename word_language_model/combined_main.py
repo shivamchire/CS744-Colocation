@@ -111,10 +111,10 @@ def train_model(args, model, corpus, device):
         test_loss, math.exp(test_loss)))
     print('=' * 89)
     if len(args.onnx_export) > 0:
-        export_onnx(args.onnx_export, batch_size=1, seq_len=args.bptt, device)
+        export_onnx(args.onnx_export, device, batch_size=1, seq_len=args.bptt)
 
 
-def export_onnx(path, batch_size, seq_len, device):
+def export_onnx(path, device, batch_size, seq_len):
     print('The model is also exported in ONNX format at {}.'.format(os.path.realpath(args.onnx_export)))
     model.eval()
     dummy_input = torch.LongTensor(seq_len * batch_size).zero_().view(-1, batch_size).to(device)
