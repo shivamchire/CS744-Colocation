@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.onnx
 from tqdm import tqdm
 import data
-import model 
+import model as mdl
 
 
 def batchify(data, bsz, device):
@@ -229,9 +229,9 @@ def main():
         corpus = data.Corpus(args.data)
         ntokens = len(corpus.dictionary)
         if args.model == 'Transformer':
-            model = model.TransformerModel(ntokens, args.emsize, args.nhead, args.nhid, args.nlayers, args.dropout).to(device)
+            model = mdl.TransformerModel(ntokens, args.emsize, args.nhead, args.nhid, args.nlayers, args.dropout).to(device)
         else:
-            model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout, args.tied).to(device)
+            model = mdl.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout, args.tied).to(device)
 
         train_model(args, model, corpus, device)
 
