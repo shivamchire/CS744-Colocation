@@ -17,6 +17,7 @@ from torch.autograd import Variable
 from models import *
 from datasets import *
 from utils import *
+from performance_iterator import PerformanceIterator
 
 
 def train(opt):
@@ -110,6 +111,8 @@ def train(opt):
         shuffle=True,
         num_workers=1,
     )
+    if opt.enable_perf_log:
+        dataloader = PerformanceIterator(dataloader, None, None, None, opt.log_file)
 
     def sample_images(batches_done):
         """Saves a generated sample from the test set"""
@@ -268,6 +271,8 @@ def test(opt):
         shuffle=True,
         num_workers=1,
     )
+    if opt.enable_perf_log:
+        test_dataloader = PerformanceIterator(test_dataloader, None, None, None, opt.log_file)
 
     G_AB.eval()
     G_BA.eval()
@@ -298,12 +303,17 @@ if __name__ == "__main__":
     parser.add_argument("--n_residual_blocks", type=int, default=9, help="number of residual blocks in generator")
     parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss weight")
     parser.add_argument("--lambda_id", type=float, default=5.0, help="identity loss weight")
-    parser.add_argument("--job_type", type=str, default="train", help="train or test")
+    parser.add_argument("--job_type", type=str, default="training", help="training or inference")
+    parser.add_argument("--enable_perf_log", action='store_true', default=False, help="If set, enable performance logging")
+    parser.add_argument("--log_file", type=str, default="cyclegan.log", help="Log file name(default:cyclegan.log)")
+    # TODO add num_steps implementation
+    parser.add_argument("--num_steps", type=int, default=50, help="Number of training steps")
+
     opt = parser.parse_args()
 
-    if opt.job_type == "train":
+    if opt.job_type == "training":
         train(opt)
-    elif opt.job_type == "test":
+    elif opt.job_type == "inference":
         test(opt)
     else:
-        raise ValueError("job_type should be either 'train' or 'test'")
+        raise ValueError("job_type should be either 'training' or 'inference'")

@@ -6,8 +6,9 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.models as models
 from tqdm import tqdm
+from performance_iterator import PerformanceIterator
 
-def train_vgg19_cifar10(num_steps=50, lr=0.001, momentum=0.9):
+def train_vgg19_cifar10(args, num_steps=50, lr=0.001, momentum=0.9, batch_size=20):
     # Check if CUDA is available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -19,8 +20,10 @@ def train_vgg19_cifar10(num_steps=50, lr=0.001, momentum=0.9):
     # Load CIFAR-10 dataset
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
                                               shuffle=True, num_workers=2)
+    if args.enable_perf_log:
+        trainloader = PerformanceIterator(trainloader, None, None, None, args.log_file)
 
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -65,7 +68,7 @@ def train_vgg19_cifar10(num_steps=50, lr=0.001, momentum=0.9):
     torch.save(model.state_dict(), 'vgg19_cifar10.pth')
     print('Finished Training')
 
-def inference_vgg19_cifar10(model_path='./vgg19_cifar10.pth', num_test_instances=None):
+def inference_vgg19_cifar10(args, model_path='./vgg19_cifar10.pth', num_test_instances=None, batch_size=20):
     # Check if CUDA is available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -80,13 +83,14 @@ def inference_vgg19_cifar10(model_path='./vgg19_cifar10.pth', num_test_instances
 
     # Use specified number of test instances if provided, otherwise use all instances
     if num_test_instances:
-        testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+        testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                                  shuffle=False, num_workers=2,
                                                  sampler=torch.utils.data.RandomSampler(testset, num_samples=num_test_instances))
     else:
-        testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+        testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                                  shuffle=False, num_workers=2)
-
+    if args.enable_perf_log:
+        testloader = PerformanceIterator(testloader, None, None, None, args.log_file)
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -110,11 +114,15 @@ def inference_vgg19_cifar10(model_path='./vgg19_cifar10.pth', num_test_instances
     accuracy = 100 * correct / total
     print(f'Accuracy of the network on the {total} test images: {accuracy:.2f} %')
 
-def main(job_type, num_steps=50, lr=0.001, momentum=0.9):
+def main(args):
+    job_type = args.job_type
+    num_steps = args.num_steps
+    lr = args.lr
+    momentum = args.momentum
     if job_type == 'training':
-        train_vgg19_cifar10(num_steps=num_steps, lr=lr, momentum=momentum)
+        train_vgg19_cifar10(args, num_steps=num_steps, lr=lr, momentum=momentum, batch_size=args.batch_size)
     elif job_type == 'inference':
-        inference_vgg19_cifar10(model_path=args.model_path, num_test_instances=args.num_test_instances)
+        inference_vgg19_cifar10(args, model_path=args.model_path, num_test_instances=num_steps, batch_size=args.batch_size)
     else:
         print("Invalid job_type. Please specify 'training' or 'inference'.")
 
@@ -127,7 +135,10 @@ if __name__ == "__main__":
     parser.add_argument("--num_test_instances", type=int, default=None, help="Number of test instances to use for inference (default: use all instances)")
     parser.add_argument("--job_type", type=str, required=True, choices=['training', 'inference'], help="Specify 'training' or 'inference'")
     parser.add_argument("--num_steps", type=int, default=50, help="Number of training steps")
+    parser.add_argument("--batch_size", type=int, default=20, help="Batch size. (default:20)")
+    parser.add_argument("--enable_perf_log", action='store_true', default=False, help="If set, enable performance logging")
+    parser.add_argument("--log_file", type=str, default="vgg.log", help="Log file name(default:vgg.log)")
 
     args = parser.parse_args()
-    main(job_type=args.job_type, num_steps=args.num_steps, lr=args.lr, momentum=args.momentum)
+    main(args)
 
