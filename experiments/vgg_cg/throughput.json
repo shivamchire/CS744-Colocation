@@ -1,0 +1,16 @@
+{
+    "experiments/vgg_cg/vgg.log": {
+        "startStep": 2,
+        "endStep": 998,
+        "numStep": 996,
+        "duration": 79.7859058380127,
+        "thr": 12.483407809170627
+    },
+    "experiments/vgg_cg/cyclegan.log": {
+        "startStep": 14,
+        "endStep": 131,
+        "numStep": 117,
+        "duration": 79.6379542350769,
+        "thr": 1.4691487384851332
+    }
+}

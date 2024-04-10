@@ -1,0 +1,23 @@
+{
+    "experiments/vgg_cg_lstm/vgg.log": {
+        "startStep": 6,
+        "endStep": 323,
+        "numStep": 317,
+        "duration": 40.868000507354736,
+        "thr": 7.756679946770375
+    },
+    "experiments/vgg_cg_lstm/cyclegan.log": {
+        "startStep": 14,
+        "endStep": 52,
+        "numStep": 38,
+        "duration": 40.187408685684204,
+        "thr": 0.9455698001632183
+    },
+    "experiments/vgg_cg_lstm/lstm.log": {
+        "startStep": 2,
+        "endStep": 998,
+        "numStep": 996,
+        "duration": 40.92375206947327,
+        "thr": 24.337944338758664
+    }
+}

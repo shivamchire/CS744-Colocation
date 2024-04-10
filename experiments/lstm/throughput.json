@@ -1,0 +1,9 @@
+{
+    "experiments/lstm/lstm.log": {
+        "startStep": 2,
+        "endStep": 998,
+        "numStep": 996,
+        "duration": 18.831550359725952,
+        "thr": 52.889962906617235
+    }
+}

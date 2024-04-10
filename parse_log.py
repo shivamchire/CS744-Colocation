@@ -56,7 +56,7 @@ def main(args):
                     stepTime = float(timestamp)
                 elif status == "DURATION":
                     executionTime = float(message)
-                if i == 3:
+                if i == 5:
                     break
             startTime.append(stepTime)
     # Find max in startTime
@@ -92,7 +92,7 @@ def main(args):
                 stepTime = float(timestamp)
             elif status == "DURATION":
                 executionTime = float(message)
-            if i == 2:
+            if i == 6:
                 break
         endTime.append(stepTime)
     # Find min in endTime
@@ -122,8 +122,11 @@ def main(args):
         throughput[log] = { 'startStep':startDict[log]['step'],
                             'endStep':endDict[log]['step'],
                             'numStep':numStep,
-                            'duration':duration,
-                            'thr':numStep/duration}
+                            'duration':duration}
+        if duration != 0:
+            throughput[log]['thr'] = numStep/duration
+        else:
+            throughput[log]['thr'] = "No overlap"
     # TODO instead of using log file name as index use model name
     with open(args.output, 'w') as fp:
         json.dump(throughput, fp, indent=4)
