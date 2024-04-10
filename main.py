@@ -30,6 +30,11 @@ MODELS = {
             'exe':'combined_main.py',
             'custArgs':'',
         },
+#        'recoder': {
+#            'dir':'./recoder/scripts/ml-20m',
+#            'exe':'',
+#            'custArgs':'',
+#         },
         'test': {
             'dir':".",
             'exe':"test.py",

@@ -137,7 +137,9 @@ def train(opt):
     # ----------
 
     prev_time = time.time()
-    for epoch in range(opt.epoch, opt.n_epochs):
+    total_steps = 0
+
+    while total_steps < opt.num_steps:
         for i, batch in tqdm(enumerate(dataloader), total=len(dataloader)):
 
             # Set model input
@@ -151,13 +153,11 @@ def train(opt):
             # Train Generators
             G_AB.train()
             G_BA.train()
-
             optimizer_G.zero_grad()
 
             # Identity loss
             loss_id_A = criterion_identity(G_BA(real_A), real_A)
             loss_id_B = criterion_identity(G_AB(real_B), real_B)
-
             loss_identity = (loss_id_A + loss_id_B) / 2
 
             # GAN loss
@@ -165,7 +165,6 @@ def train(opt):
             loss_GAN_AB = criterion_GAN(D_B(fake_B), valid)
             fake_A = G_BA(real_B)
             loss_GAN_BA = criterion_GAN(D_A(fake_A), valid)
-
             loss_GAN = (loss_GAN_AB + loss_GAN_BA) / 2
 
             # Cycle loss
@@ -173,60 +172,45 @@ def train(opt):
             loss_cycle_A = criterion_cycle(recov_A, real_A)
             recov_B = G_AB(fake_A)
             loss_cycle_B = criterion_cycle(recov_B, real_B)
-
             loss_cycle = (loss_cycle_A + loss_cycle_B) / 2
 
             # Total loss
             loss_G = loss_GAN + opt.lambda_cyc * loss_cycle + opt.lambda_id * loss_identity
-
             loss_G.backward()
             optimizer_G.step()
 
             # Train Discriminator A
             optimizer_D_A.zero_grad()
-
-            # Real loss
             loss_real = criterion_GAN(D_A(real_A), valid)
-            # Fake loss (on batch of previously generated samples)
             fake_A_ = fake_A_buffer.push_and_pop(fake_A)
             loss_fake = criterion_GAN(D_A(fake_A_.detach()), fake)
-            # Total loss
             loss_D_A = (loss_real + loss_fake) / 2
-
             loss_D_A.backward()
             optimizer_D_A.step()
 
             # Train Discriminator B
             optimizer_D_B.zero_grad()
-
-            # Real loss
             loss_real = criterion_GAN(D_B(real_B), valid)
-            # Fake loss (on batch of previously generated samples)
             fake_B_ = fake_B_buffer.push_and_pop(fake_B)
             loss_fake = criterion_GAN(D_B(fake_B_.detach()), fake)
-            # Total loss
             loss_D_B = (loss_real + loss_fake) / 2
-
             loss_D_B.backward()
             optimizer_D_B.step()
 
             loss_D = (loss_D_A + loss_D_B) / 2
 
             # Log Progress
-            # Determine approximate time left
-            batches_done = epoch * len(dataloader) + i
-            batches_left = opt.n_epochs * len(dataloader) - batches_done
-            time_left = datetime.timedelta(seconds=batches_left * (time.time() - prev_time))
-            prev_time = time.time()
+            total_steps += 1
+            if total_steps >= opt.num_steps:
+                break
+            time_left = datetime.timedelta(seconds=(opt.num_steps - total_steps) * (time.time() - prev_time))
 
             # Print log
             sys.stdout.write(
-                "\r[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f, adv: %f, cycle: %f, identity: %f] ETA: %s"
+                "\r[Step %d/%d] [D loss: %f] [G loss: %f, adv: %f, cycle: %f, identity: %f] ETA: %s"
                 % (
-                    epoch,
-                    opt.n_epochs,
-                    i,
-                    len(dataloader),
+                    total_steps,
+                    opt.num_steps,
                     loss_D.item(),
                     loss_G.item(),
                     loss_GAN.item(),
@@ -237,21 +221,20 @@ def train(opt):
             )
 
             # If at sample interval save image
-            if batches_done % opt.sample_interval == 0:
-                sample_images(batches_done)
+            if total_steps % opt.sample_interval == 0:
+                sample_images(total_steps)
 
         # Update learning rates
         lr_scheduler_G.step()
         lr_scheduler_D_A.step()
         lr_scheduler_D_B.step()
 
-        if opt.checkpoint_interval != -1 and epoch % opt.checkpoint_interval == 0:
+        if opt.checkpoint_interval != -1 and total_steps % opt.checkpoint_interval == 0:
             # Save model checkpoints
-            torch.save(G_AB.state_dict(), "saved_models/%s/G_AB_%d.pth" % (opt.dataset_name, epoch))
-            torch.save(G_BA.state_dict(), "saved_models/%s/G_BA_%d.pth" % (opt.dataset_name, epoch))
-            torch.save(D_A.state_dict(), "saved_models/%s/D_A_%d.pth" % (opt.dataset_name, epoch))
-            torch.save(D_B.state_dict(), "saved_models/%s/D_B_%d.pth" % (opt.dataset_name, epoch))
-
+            torch.save(G_AB.state_dict(), "saved_models/%s/G_AB_%d.pth" % (opt.dataset_name, total_steps))
+            torch.save(G_BA.state_dict(), "saved_models/%s/G_BA_%d.pth" % (opt.dataset_name, total_steps))
+            torch.save(D_A.state_dict(), "saved_models/%s/D_A_%d.pth" % (opt.dataset_name, total_steps))
+            torch.save(D_B.state_dict(), "saved_models/%s/D_B_%d.pth" % (opt.dataset_name, total_steps))
 
 def test(opt):
     print("Performing inference...")
@@ -307,7 +290,7 @@ if __name__ == "__main__":
     parser.add_argument("--enable_perf_log", action='store_true', default=False, help="If set, enable performance logging")
     parser.add_argument("--log_file", type=str, default="cyclegan.log", help="Log file name(default:cyclegan.log)")
     # TODO add num_steps implementation
-    parser.add_argument("--num_steps", type=int, default=50, help="Number of training steps")
+    parser.add_argument("--num_steps", type=int, default=5, help="Number of training steps")
 
     opt = parser.parse_args()
 
