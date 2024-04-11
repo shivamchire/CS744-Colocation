@@ -1,0 +1,9 @@
+{
+    "experiments/resnet18/resnet18.log": {
+        "startStep": 2,
+        "endStep": 1000,
+        "numStep": 998,
+        "duration": 44.956857442855835,
+        "thr": 22.199060538618536
+    }
+}

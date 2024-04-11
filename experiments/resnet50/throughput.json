@@ -1,0 +1,9 @@
+{
+    "experiments/resnet50/resnet50.log": {
+        "startStep": 2,
+        "endStep": 1000,
+        "numStep": 998,
+        "duration": 130.19344210624695,
+        "thr": 7.665516663931216
+    }
+}
