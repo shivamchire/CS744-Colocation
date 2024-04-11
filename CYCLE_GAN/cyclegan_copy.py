@@ -138,9 +138,8 @@ def train(opt):
 
     prev_time = time.time()
     total_steps = 0
-    step_start_time = time.time()
-    # while total_steps < opt.num_steps:
-    for step in range(0, opt.num_steps):
+
+    while total_steps < opt.num_steps:
         for i, batch in tqdm(enumerate(dataloader), total=len(dataloader)):
 
             # Set model input
@@ -201,17 +200,16 @@ def train(opt):
             loss_D = (loss_D_A + loss_D_B) / 2
 
             # Log Progress
-            # total_steps += 1
-            # if total_steps >= opt.num_steps:
-            #     break
-            time_left = datetime.timedelta(seconds=(opt.num_steps - step) * (time.time() - prev_time))
-            prev_time = time.time()
+            total_steps += 1
+            if total_steps >= opt.num_steps:
+                break
+            time_left = datetime.timedelta(seconds=(opt.num_steps - total_steps) * (time.time() - prev_time))
+
             # Print log
-            # sys.stdout.write
             sys.stdout.write(
                 "\r[Step %d/%d] [D loss: %f] [G loss: %f, adv: %f, cycle: %f, identity: %f] ETA: %s"
                 % (
-                    step,
+                    total_steps,
                     opt.num_steps,
                     loss_D.item(),
                     loss_G.item(),
@@ -223,29 +221,28 @@ def train(opt):
             )
 
             # If at sample interval save image
-            if step % opt.sample_interval == 0:
-                sample_images(step)
+            if total_steps % opt.sample_interval == 0:
+                sample_images(total_steps)
 
         # Update learning rates
         lr_scheduler_G.step()
         lr_scheduler_D_A.step()
         lr_scheduler_D_B.step()
-        step_start_time = time.time()
 
-        if opt.checkpoint_interval != -1 and step % opt.checkpoint_interval == 0 or step == opt.num_steps-1:
+        if opt.checkpoint_interval != -1 and total_steps % opt.checkpoint_interval == 0:
             # Save model checkpoints
-            torch.save(G_AB.state_dict(), "saved_models/%s/G_AB_%d.pth" % (opt.dataset_name, step))
-            torch.save(G_BA.state_dict(), "saved_models/%s/G_BA_%d.pth" % (opt.dataset_name, step))
-            torch.save(D_A.state_dict(), "saved_models/%s/D_A_%d.pth" % (opt.dataset_name, step))
-            torch.save(D_B.state_dict(), "saved_models/%s/D_B_%d.pth" % (opt.dataset_name, step))
+            torch.save(G_AB.state_dict(), "saved_models/%s/G_AB_%d.pth" % (opt.dataset_name, total_steps))
+            torch.save(G_BA.state_dict(), "saved_models/%s/G_BA_%d.pth" % (opt.dataset_name, total_steps))
+            torch.save(D_A.state_dict(), "saved_models/%s/D_A_%d.pth" % (opt.dataset_name, total_steps))
+            torch.save(D_B.state_dict(), "saved_models/%s/D_B_%d.pth" % (opt.dataset_name, total_steps))
 
 def test(opt):
     print("Performing inference...")
     # Load models
     G_AB = GeneratorResNet((opt.channels, opt.img_height, opt.img_width), opt.n_residual_blocks)
     G_BA = GeneratorResNet((opt.channels, opt.img_height, opt.img_width), opt.n_residual_blocks)
-    G_AB.load_state_dict(torch.load("saved_models/%s/G_AB_%d.pth" % (opt.dataset_name, opt.num_steps - 1)))
-    G_BA.load_state_dict(torch.load("saved_models/%s/G_BA_%d.pth" % (opt.dataset_name, opt.num_steps - 1)))
+    G_AB.load_state_dict(torch.load("saved_models/%s/G_AB_%d.pth" % (opt.dataset_name, opt.n_epochs - 1)))
+    G_BA.load_state_dict(torch.load("saved_models/%s/G_BA_%d.pth" % (opt.dataset_name, opt.n_epochs - 1)))
 
     cuda = torch.cuda.is_available()
     Tensor = torch.cuda.FloatTensor if cuda else torch.Tensor
@@ -284,16 +281,16 @@ if __name__ == "__main__":
     parser.add_argument("--img_height", type=int, default=256, help="size of image height")
     parser.add_argument("--img_width", type=int, default=256, help="size of image width")
     parser.add_argument("--channels", type=int, default=3, help="number of image channels")
-    parser.add_argument("--sample_interval", type=int, default=2, help="interval between saving generator outputs")
-    parser.add_argument("--checkpoint_interval", type=int, default=2, help="interval between saving model checkpoints")
+    parser.add_argument("--sample_interval", type=int, default=100, help="interval between saving generator outputs")
+    parser.add_argument("--checkpoint_interval", type=int, default=-1, help="interval between saving model checkpoints")
     parser.add_argument("--n_residual_blocks", type=int, default=9, help="number of residual blocks in generator")
     parser.add_argument("--lambda_cyc", type=float, default=10.0, help="cycle loss weight")
     parser.add_argument("--lambda_id", type=float, default=5.0, help="identity loss weight")
     parser.add_argument("--job_type", type=str, default="training", help="training or inference")
-    parser.add_argument("--enable_perf_log", action='store_true', default=True, help="If set, enable performance logging")
+    parser.add_argument("--enable_perf_log", action='store_true', default=False, help="If set, enable performance logging")
     parser.add_argument("--log_file", type=str, default="cyclegan.log", help="Log file name(default:cyclegan.log)")
     # TODO add num_steps implementation
-    parser.add_argument("--num_steps", type=int, default=25, help="Number of training steps")
+    parser.add_argument("--num_steps", type=int, default=5, help="Number of training steps")
 
     opt = parser.parse_args()
 
