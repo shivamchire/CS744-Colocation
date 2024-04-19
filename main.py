@@ -28,7 +28,7 @@ MODELS = {
         'lstm': {
             'dir':'./LSTM',
             'exe':'combined_main.py',
-            'custArgs':['--cuda'],
+            'custArgs':'',
         },
 #        'recoder': {
 #            'dir':'./recoder/scripts/ml-20m',
@@ -59,12 +59,13 @@ MODELS = {
        }
 def _makeExec(model):
     return '{:s}'.format(model['exe'])
-def runModel(m, numSteps, batchSize, mode, asy=0):
+def runModel(m, numSteps, batchSize, mode,logFile, asy=0):
     # Run model with num_steps, batch_size
     command = ['python', _makeExec(m),
             '--batch_size', str(batchSize),
             '--num_steps', str(numSteps),
             '--job_type', mode,
+            '--log_file',logFile,
             '--enable_perf_log']
     for a in m['custArgs']:
         command.append(a)
@@ -91,6 +92,7 @@ def main(args):
     jobType = args.type.split(",")
     numSteps = args.num_steps.split(",")
     batchSize = args.batch_size.split(",")
+    logFile = args.log_file.split(",")
     # If run model individually
     if args.colocate == 0:
         asy = 0
@@ -105,7 +107,7 @@ def main(args):
         else:
             mode = 'inference'
         process = runModel(m, numSteps=numSteps[i],
-                batchSize=batchSize[i], asy=asy, mode=mode)
+                batchSize=batchSize[i], logFile=logFile[i], asy=asy, mode=mode)
         childProcess.append(process)
         #time.sleep(20)
     if asy:
@@ -137,6 +139,10 @@ if __name__=='__main__':
             help='Comma separated list of number of steps to run over which we want to take readings')
     parser.add_argument('-b', '--batch_size', type=str, default="20,1",
     help='Comma separated list of batch sizes to run models given by --models(default:4)')
+
+    parser.add_argument('-log_file', type=str, default="lstm1.log,lstm2.log",
+    help='')
+
     parser.add_argument('-t', '--type', type=str, default='training,training',
     help='Comma separated list of mode in which\
     you want to run models specified by --models. Supported: training,\
