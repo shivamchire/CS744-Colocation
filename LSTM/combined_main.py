@@ -10,8 +10,10 @@ from tqdm import tqdm
 import data
 import model as mdl
 from performance_iterator import PerformanceIterator
+
 eval_batch_size = 10
 criterion = nn.NLLLoss()
+
 def repackage_hidden(h):
     """Wraps hidden states in new Tensors, to detach them from their history."""
 
@@ -131,81 +133,7 @@ def train_model(args, model, corpus, device, num_steps):
     except KeyboardInterrupt:
         print('-' * 89)
         print('Exiting from training early')
-"""
-def train_model_old(args, model, corpus, device):
-    train_data = batchify(corpus.train, args.batch_size, device)
-    val_data = batchify(corpus.valid, eval_batch_size, device)
-    test_data = batchify(corpus.test, eval_batch_size, device)
 
-    criterion = nn.NLLLoss()
-    lr = args.lr
-    best_val_loss = None
-
-    try:
-        for epoch in range(1, args.epochs+1):
-            epoch_start_time = time.time()
-            model.train()
-            total_loss = 0.
-            start_time = time.time()
-            ntokens = len(corpus.dictionary)
-            if args.model != 'Transformer':
-                hidden = model.init_hidden(args.batch_size)
-            
-            data_loader = tqdm(enumerate(range(0, train_data.size(0) - 1, args.bptt)), total=len(train_data) // args.bptt)
-            for batch, i in data_loader:
-                data, targets = get_batch(args, train_data, i)
-                model.zero_grad()
-                if args.model == 'Transformer':
-                    output = model(data)
-                    output = output.view(-1, ntokens)
-                else:
-                    hidden = repackage_hidden(hidden)
-                    output, hidden = model(data, hidden)
-                loss = criterion(output, targets)
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-                for p in model.parameters():
-                    p.data.add_(p.grad, alpha=-lr)
-                total_loss += loss.item()
-                if batch % args.log_interval == 0 and batch > 0:
-                    cur_loss = total_loss / args.log_interval
-                    elapsed = time.time() - start_time
-                    ips = (batch * args.batch_size) / elapsed
-                    tqdm.write('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                            'loss {:5.2f} | ppl {:8.2f} | IPS {:6.2f}'.format(
-                        epoch, batch, len(train_data) // args.bptt, lr,
-                        elapsed * 1000 / args.log_interval, cur_loss, math.exp(cur_loss), ips))
-                    total_loss = 0
-                    start_time = time.time()
-                if args.dry_run:
-                    break
-            val_loss = evaluate(args, val_data, model, corpus)
-            print('-' * 89)
-            print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
-                    'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
-                                               val_loss, math.exp(val_loss)))
-            print('-' * 89)
-            if not best_val_loss or val_loss < best_val_loss:
-                with open(args.save, 'wb') as f:
-                    torch.save(model, f)
-                best_val_loss = val_loss
-            else:
-                lr /= 4.0
-    except KeyboardInterrupt:
-        print('-' * 89)
-        print('Exiting from training early')
-    with open(args.save, 'rb') as f:
-        model = torch.load(f)
-        if args.model in ['RNN_TANH', 'RNN_RELU', 'LSTM', 'GRU']:
-            model.rnn.flatten_parameters()
-    test_loss = evaluate(args, test_data, model, corpus)
-    print('=' * 89)
-    print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
-        test_loss, math.exp(test_loss)))
-    print('=' * 89)
-    if len(args.onnx_export) > 0:
-        export_onnx(args.onnx_export, device, model, batch_size=1, seq_len=args.bptt)
-"""
 
 def export_onnx(path, device, model, batch_size, seq_len):
     print('The model is also exported in ONNX format at {}.'.format(os.path.realpath(args.onnx_export)))
@@ -214,9 +142,8 @@ def export_onnx(path, device, model, batch_size, seq_len):
     hidden = model.init_hidden(batch_size)
     torch.onnx.export(model, (dummy_input, hidden), path)
 
-
 # Inference script
-def generate(args, device):
+def generate_working_without_dataloader(args, device):
     if args.temperature < 1e-3:
         parser.error("--temperature has to be greater or equal 1e-3.")
 
@@ -234,7 +161,7 @@ def generate(args, device):
 
     with open(args.outf, 'w') as outf:
         with torch.no_grad():  # no tracking history
-            for i in range(args.words):
+            for i in range(args.num_steps):
                 if is_transformer_model:
                     output = model(input, False)
                     word_weights = output[-1].squeeze().div(args.temperature).exp().cpu()
@@ -252,8 +179,60 @@ def generate(args, device):
                 outf.write(word + ('\n' if i % 20 == 19 else ' '))
 
                 if i % args.log_interval == 0:
-                    print('| Generated {}/{} words'.format(i, args.words))
+                    print('| Generated {}/{} words'.format(i, args.num_steps))
 
+def generate(args, device):
+    if args.temperature < 1e-3:
+        parser.error("--temperature has to be greater or equal 1e-3.")
+
+    with open(args.checkpoint, 'rb') as f:
+        model = torch.load(f, map_location=device)
+    model.eval()
+
+    corpus = data.Corpus(args.data)
+    ntokens = len(corpus.dictionary)
+
+    is_transformer_model = hasattr(model, 'model_type') and model.model_type == 'Transformer'
+
+
+    # Define the data loader
+    dataloader = torch.utils.data.DataLoader(
+        corpus.test, batch_size=1, shuffle=False, drop_last=False
+    )
+    if args.enable_perf_log:
+        dataloader = PerformanceIterator(dataloader, None, None, None, args.log_file)
+
+    dataloader = iter(dataloader)
+
+    with open(args.outf, 'w') as outf:
+        with torch.no_grad():  # no tracking history
+            for i, datas in enumerate(dataloader):
+                # Get the input from the data batch
+                if i >= args.num_steps:
+                    break
+                input = datas.to(device)
+
+                if is_transformer_model:
+                    output = model(input, False)
+                    word_weights = output[-1].squeeze().div(args.temperature).exp().cpu()
+                    word_idx = torch.multinomial(word_weights, 1)[0]
+                    word_tensor = torch.Tensor([[word_idx]]).long().to(device)
+                    input = torch.cat([input, word_tensor], 0)
+                else:
+                    output, hidden = model(input, None)  # No need for hidden with data loader
+                    word_weights = output.squeeze().div(args.temperature).exp().cpu()
+                    word_idx = torch.multinomial(word_weights, 1)[0]
+                    input.fill_(word_idx)
+
+                word = corpus.dictionary.idx2word[word_idx]
+
+                outf.write(word + ('\n' if i % 20 == 19 else ' '))
+
+                if i % args.log_interval == 0:
+                    print('| Generated {}/{} words'.format(i * len(datas), args.num_steps))
+
+        # Handle performance logging if enabled (original code snippet remains)
+        
 
 def main():
     parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 Language Model')
@@ -287,7 +266,7 @@ def main():
                         help='random seed')
     parser.add_argument('--log_interval', type=int, default=10,
                         help='random seed')
-    parser.add_argument('--cuda', action='store_true', default=False,
+    parser.add_argument('--cuda', action='store_true', default=True,
                         help='use CUDA')
     parser.add_argument('--mps', action='store_true', default=False,
                             help='enables macOS GPU training')
