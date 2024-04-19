@@ -1,0 +1,18 @@
+{
+    "exp_diff_#iter/vgg_cg_1000/vgg.log": {
+        "startStep": 2,
+        "endStep": 998,
+        "numStep": 996,
+        "duration": 35.983927965164185,
+        "thr": 27.67902383987155,
+        "lat": 0.03612844173209256
+    },
+    "exp_diff_#iter/vgg_cg_1000/cyclegan.log": {
+        "startStep": 9,
+        "endStep": 95,
+        "numStep": 86,
+        "duration": 35.94730067253113,
+        "thr": 2.3923910388552843,
+        "lat": 0.41799186828524565
+    }
+}
