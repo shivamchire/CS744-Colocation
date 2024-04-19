@@ -50,6 +50,11 @@ MODELS = {
             'exe':"test.py",
             'data':".",
             'custArgs':"-ctest -aabd".split(" ")
+        },
+        's2s': {
+            'dir': './s2s',
+            'exe': 's2stransformer.py',
+            'custArgs': "--gpuIdx 0 --alpha 0.0001 --saveModel s2s.pt".split(" ")
         }
        }
 def _makeExec(model):
