@@ -335,14 +335,15 @@ if __name__ == '__main__':
     subprocess.run(['python3', '-m', 'spacy', 'download', 'en_core_web_sm'], stdout=subprocess.DEVNULL)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpuIdx', type=int, help='Index of GPU to use')
-    parser.add_argument('--batch_size', dest='batchSize', type=int, help='Batch size')
-    parser.add_argument('--alpha', type=float, help='Learning rate')
+    parser.add_argument('--gpuIdx', type=int, default=0, help='Index of GPU to use')
+    parser.add_argument('--batch_size', dest='batchSize', default=32, type=int, help='Batch size')
+    parser.add_argument('--alpha', type=float, default=0.0001, help='Learning rate')
     parser.add_argument('--epochs', type=int, help='Number of epochs')
-    parser.add_argument('--saveModel', type=str, help='Path to save model')
-    parser.add_argument('--job_type', dest='mode', type=str, help='train/infer')
+    parser.add_argument('--saveModel', type=str, default="s2s.pt", help='Path to save model')
+    parser.add_argument('--job_type', dest='mode', default="training", type=str, help='training/inference')
     parser.add_argument("--enable_perf_log", action='store_true', default=False, help="If set, enable performance logging")
-    parser.add_argument("--num_steps", dest='numBatches', type=int, help="Number of training steps")
+    parser.add_argument("--num_steps", dest='numBatches', type=int, default=1000, help="Number of training steps")
+    parser.add_argument("--log_file", type=str, default="transformer.log", help="Log file name(default:vgg.log)")
     args = parser.parse_args()
 
     DEVICE = torch.device(f'cuda:{args.gpuIdx}' if torch.cuda.is_available() else 'cpu')
@@ -380,7 +381,7 @@ if __name__ == '__main__':
 
         alpha = 0.001 if args.alpha is None else args.alpha
         numEpochs = 10 if args.epochs is None else args.epochs
-        logFile = 'trainS2S.log' if args.enable_perf_log else None
+        logFile = args.log_file if args.enable_perf_log else None
 
         for p in model.parameters():
             if p.dim() > 1:
