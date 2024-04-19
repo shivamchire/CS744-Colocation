@@ -107,7 +107,7 @@ def train(opt):
     # Test data loader
     val_dataloader = DataLoader(
         ImageDataset("./data/%s" % opt.dataset_name, transforms_=transforms_, unaligned=True, mode="test"),
-        batch_size=5,
+        batch_size=opt.batch_size,
         shuffle=True,
         num_workers=1,
     )
@@ -221,8 +221,8 @@ def train(opt):
             )
 
             # If at sample interval save image
-            if total_steps % opt.sample_interval == 0:
-                sample_images(total_steps)
+            # if total_steps % opt.sample_interval == 0:
+            #     sample_images(total_steps)
 
         # Update learning rates
         lr_scheduler_G.step()
@@ -250,7 +250,7 @@ def test(opt):
     # Test data loader
     test_dataloader = DataLoader(
         ImageDataset("./data/%s" % opt.dataset_name, transforms_=None, unaligned=True, mode="test"),
-        batch_size=1,
+        batch_size=opt.batch_size,
         shuffle=True,
         num_workers=1,
     )
@@ -261,10 +261,15 @@ def test(opt):
     G_BA.eval()
 
     os.makedirs("output/%s" % opt.dataset_name, exist_ok=True)
-    for i, batch in enumerate(test_dataloader):
-        real_A = Variable(batch["A"].type(Tensor))
-        fake_B = G_AB(real_A)
-        save_image(fake_B, "output/%s/%s.png" % (opt.dataset_name, i), normalize=False)
+    total_steps = 0
+    while total_steps < opt.num_steps:
+        for i, batch in enumerate(test_dataloader):
+            real_A = Variable(batch["A"].type(Tensor))
+            fake_B = G_AB(real_A)
+            save_image(fake_B, "output/%s/%s.png" % (opt.dataset_name, i), normalize=False)
+            total_steps += 1
+            if total_steps >= opt.num_steps:
+                break
 
 
 if __name__ == "__main__":

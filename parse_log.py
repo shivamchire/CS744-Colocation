@@ -125,8 +125,10 @@ def main(args):
                             'duration':duration}
         if duration != 0:
             throughput[log]['thr'] = numStep/duration
+            throughput[log]['lat'] = duration/numStep
         else:
             throughput[log]['thr'] = "No overlap"
+            throughput[log]['lat'] = "No overlap"
     # TODO instead of using log file name as index use model name
     with open(args.output, 'w') as fp:
         json.dump(throughput, fp, indent=4)

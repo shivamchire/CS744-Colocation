@@ -103,13 +103,18 @@ def inference_vgg19_cifar10(args, model_path='./vgg19_cifar10.pth', num_test_ins
     # Perform inference on the test set
     correct = 0
     total = 0
-    with torch.no_grad():
-        for data in tqdm(testloader, total=len(testloader)):
-            images, labels = data[0].to(device), data[1].to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+    total_steps = 0
+    while total_steps < args.num_steps:
+        with torch.no_grad():
+            for data in tqdm(testloader, total=len(testloader)):
+                images, labels = data[0].to(device), data[1].to(device)
+                outputs = model(images)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+                total_steps += 1
+                if total_steps > args.num_steps:
+                    break
 
     accuracy = 100 * correct / total
     print(f'Accuracy of the network on the {total} test images: {accuracy:.2f} %')
