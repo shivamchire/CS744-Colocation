@@ -1,6 +1,8 @@
 import warnings
 warnings.filterwarnings("ignore")
 import multiprocessing as mp
+import torch.multiprocessing
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 import glog
 import pandas as pd
