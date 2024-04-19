@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/users/hshivam/recoder/scripts/ml-20m/train.py", line 8, in <module>
+    from recoder.model import Recoder
+  File "/users/hshivam/.local/lib/python3.10/site-packages/recoder/model.py", line 5, in <module>
+    import torch
+  File "/users/hshivam/.local/lib/python3.10/site-packages/torch/__init__.py", line 237, in <module>
+    from torch._C import *  # noqa: F403
+KeyboardInterrupt
