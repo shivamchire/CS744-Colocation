@@ -193,91 +193,105 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
     )
     start_time = time.time()
 
-    # TRY NOT TO MODIFY: start the game
-    obs, _ = envs.reset(seed=args.seed)
-    for global_step in range(args.num_steps):
-        # ALGO LOGIC: put action logic here
-        epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.num_steps, global_step)
-        if random.random() < epsilon:
-            actions = np.array([envs.single_action_space.sample() for _ in range(envs.num_envs)])
-        else:
+    if args.job_type == "training":
+        # TRY NOT TO MODIFY: start the game
+        obs, _ = envs.reset(seed=args.seed)
+        for global_step in range(args.num_steps):
+            # ALGO LOGIC: put action logic here
+            epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.num_steps, global_step)
+            if random.random() < epsilon:
+                actions = np.array([envs.single_action_space.sample() for _ in range(envs.num_envs)])
+            else:
+                q_values = q_network(torch.Tensor(obs).to(device))
+                actions = torch.argmax(q_values, dim=1).cpu().numpy()
+
+            # TRY NOT TO MODIFY: execute the game and log data.
+            next_obs, rewards, terminations, truncations, infos = envs.step(actions)
+
+            # TRY NOT TO MODIFY: record rewards for plotting purposes
+            if "final_info" in infos:
+                for info in infos["final_info"]:
+                    if info and "episode" in info:
+                        print(f"global_step={global_step}, episodic_return={info['episode']['r']}")
+                        writer.add_scalar("charts/episodic_return", info["episode"]["r"], global_step)
+                        writer.add_scalar("charts/episodic_length", info["episode"]["l"], global_step)
+
+            # TRY NOT TO MODIFY: save data to reply buffer; handle `final_observation`
+            real_next_obs = next_obs.copy()
+            for idx, trunc in enumerate(truncations):
+                if trunc:
+                    real_next_obs[idx] = infos["final_observation"][idx]
+            rb.add(obs, real_next_obs, actions, rewards, terminations, infos)
+
+            # TRY NOT TO MODIFY: CRUCIAL step easy to overlook
+            obs = next_obs
+
+            # ALGO LOGIC: training.
+            if global_step > args.learning_starts:
+                if global_step % args.train_frequency == 0:
+                    data = rb.sample(args.batch_size)
+                    with torch.no_grad():
+                        target_max, _ = target_network(data.next_observations).max(dim=1)
+                        td_target = data.rewards.flatten() + args.gamma * target_max * (1 - data.dones.flatten())
+                    old_val = q_network(data.observations).gather(1, data.actions).squeeze()
+                    loss = F.mse_loss(td_target, old_val)
+
+                    if global_step % 100 == 0:
+                        writer.add_scalar("losses/td_loss", loss, global_step)
+                        writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
+                        print("SPS:", int(global_step / (time.time() - start_time)))
+                        writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
+
+                    # optimize the model
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+
+                # update target network
+                if global_step % args.target_network_frequency == 0:
+                    for target_network_param, q_network_param in zip(target_network.parameters(), q_network.parameters()):
+                        target_network_param.data.copy_(
+                            args.tau * q_network_param.data + (1.0 - args.tau) * target_network_param.data
+                        )
+
+        if args.save_model:
+            model_path = f"runs/{run_name}/{args.exp_name}.cleanrl_model"
+            torch.save(q_network.state_dict(), model_path)
+            print(f"model saved to {model_path}")
+            from cleanrl_utils.evals.dqn_eval import evaluate
+
+            episodic_returns = evaluate(
+                model_path,
+                make_env,
+                args.env_id,
+                eval_episodes=10,
+                run_name=f"{run_name}-eval",
+                Model=QNetwork,
+                device=device,
+                epsilon=0.05,
+            )
+            for idx, episodic_return in enumerate(episodic_returns):
+                writer.add_scalar("eval/episodic_return", episodic_return, idx)
+
+            if args.upload_model:
+                from cleanrl_utils.huggingface import push_to_hub
+
+                repo_name = f"{args.env_id}-{args.exp_name}-seed{args.seed}"
+                repo_id = f"{args.hf_entity}/{repo_name}" if args.hf_entity else repo_name
+                push_to_hub(args, episodic_returns, repo_id, "DQN", f"runs/{run_name}", f"videos/{run_name}-eval")
+
+        envs.close()
+        writer.close()
+
+    else:
+        # Inference
+        obs, _ = envs.reset(seed=args.seed)
+        for global_step in range(args.num_steps):
             q_values = q_network(torch.Tensor(obs).to(device))
             actions = torch.argmax(q_values, dim=1).cpu().numpy()
 
-        # TRY NOT TO MODIFY: execute the game and log data.
-        next_obs, rewards, terminations, truncations, infos = envs.step(actions)
+            # TRY NOT TO MODIFY: execute the game and log data.
+            next_obs, rewards, terminations, truncations, infos = envs.step(actions)
 
-        # TRY NOT TO MODIFY: record rewards for plotting purposes
-        if "final_info" in infos:
-            for info in infos["final_info"]:
-                if info and "episode" in info:
-                    print(f"global_step={global_step}, episodic_return={info['episode']['r']}")
-                    writer.add_scalar("charts/episodic_return", info["episode"]["r"], global_step)
-                    writer.add_scalar("charts/episodic_length", info["episode"]["l"], global_step)
-
-        # TRY NOT TO MODIFY: save data to reply buffer; handle `final_observation`
-        real_next_obs = next_obs.copy()
-        for idx, trunc in enumerate(truncations):
-            if trunc:
-                real_next_obs[idx] = infos["final_observation"][idx]
-        rb.add(obs, real_next_obs, actions, rewards, terminations, infos)
-
-        # TRY NOT TO MODIFY: CRUCIAL step easy to overlook
-        obs = next_obs
-
-        # ALGO LOGIC: training.
-        if global_step > args.learning_starts:
-            if global_step % args.train_frequency == 0:
-                data = rb.sample(args.batch_size)
-                with torch.no_grad():
-                    target_max, _ = target_network(data.next_observations).max(dim=1)
-                    td_target = data.rewards.flatten() + args.gamma * target_max * (1 - data.dones.flatten())
-                old_val = q_network(data.observations).gather(1, data.actions).squeeze()
-                loss = F.mse_loss(td_target, old_val)
-
-                if global_step % 100 == 0:
-                    writer.add_scalar("losses/td_loss", loss, global_step)
-                    writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
-                    print("SPS:", int(global_step / (time.time() - start_time)))
-                    writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
-
-                # optimize the model
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            # update target network
-            if global_step % args.target_network_frequency == 0:
-                for target_network_param, q_network_param in zip(target_network.parameters(), q_network.parameters()):
-                    target_network_param.data.copy_(
-                        args.tau * q_network_param.data + (1.0 - args.tau) * target_network_param.data
-                    )
-
-    if args.save_model:
-        model_path = f"runs/{run_name}/{args.exp_name}.cleanrl_model"
-        torch.save(q_network.state_dict(), model_path)
-        print(f"model saved to {model_path}")
-        from cleanrl_utils.evals.dqn_eval import evaluate
-
-        episodic_returns = evaluate(
-            model_path,
-            make_env,
-            args.env_id,
-            eval_episodes=10,
-            run_name=f"{run_name}-eval",
-            Model=QNetwork,
-            device=device,
-            epsilon=0.05,
-        )
-        for idx, episodic_return in enumerate(episodic_returns):
-            writer.add_scalar("eval/episodic_return", episodic_return, idx)
-
-        if args.upload_model:
-            from cleanrl_utils.huggingface import push_to_hub
-
-            repo_name = f"{args.env_id}-{args.exp_name}-seed{args.seed}"
-            repo_id = f"{args.hf_entity}/{repo_name}" if args.hf_entity else repo_name
-            push_to_hub(args, episodic_returns, repo_id, "DQN", f"runs/{run_name}", f"videos/{run_name}-eval")
-
-    envs.close()
-    writer.close()
+            # TRY NOT TO MODIFY: CRUCIAL step easy to overlook
+            obs = next_obs
