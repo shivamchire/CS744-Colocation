@@ -15,18 +15,18 @@ class cd:
     def __exit__(self, etype, value, traceback):
         os.chdir(self.savedPath)
 MODELS = {
-        'vgg': {
-            'dir':'./VGG_CIFAR',
-            'exe':'combined_main.py',
-            'custArgs':'',
-        },
+        # 'vgg': {
+        #     'dir':'./VGG_CIFAR',
+        #     'exe':'combined_main.py',
+        #     'custArgs':'',
+        # },
         'cyclegan': {
-            'dir':'./CYCLE_GAN',
+            'dir':'./cyclegan',
             'exe':'cyclegan_copy.py',
             'custArgs':'',
         },
         'lstm': {
-            'dir':'./LSTM',
+            'dir':'./lstm',
             'exe':'combined_main.py',
             'custArgs':'',
         },
@@ -35,15 +35,15 @@ MODELS = {
 #            'exe':'',
 #            'custArgs':'',
 #         },
-        'resnet18': {
-            'dir':'./imagenet',
-            'exe':'main.py',
-            'custArgs':'-a resnet18 --dummy --log_file resnet18.log'.split(" ")
-        },
+        # 'resnet18': {
+        #     'dir':'./imagenet',
+        #     'exe':'main.py',
+        #     'custArgs':'-a resnet18 --dummy --log_file resnet18.log'.split(" ")
+        # },
         'resnet50': {
-            'dir':'./imagenet',
+            'dir':'./resnet50',
             'exe':'main.py',
-            'custArgs':'-a resnet50 --dummy --log_file resnet50.log'.split(" ")
+            'custArgs':'-a resnet50 --dummy '.split(" ")
         },
         'test': {
             'dir':".",
