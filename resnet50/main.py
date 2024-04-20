@@ -82,7 +82,7 @@ parser.add_argument('--dummy', action='store_true', help="use fake data to bench
 parser.add_argument("--enable_perf_log", action='store_true', default=True, help="If set, enable performance logging")
 parser.add_argument("--log_file", type=str, default="imagenet.log", help="Log file name(default:imagenet.log)")
 parser.add_argument("--num_steps", type=int, default=50, help="Number of training steps")
-parser.add_argument("--job_type", type=str, required=True, choices=['training', 'inference'], help="Specify 'training' or 'inference'")
+parser.add_argument("--job_type", type=str, default='training', choices=['training', 'inference'], help="Specify 'training' or 'inference'")
 
 best_acc1 = 0
 num_steps_complete_flag = 0
