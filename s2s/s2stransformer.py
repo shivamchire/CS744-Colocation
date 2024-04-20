@@ -341,7 +341,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, help='Number of epochs')
     parser.add_argument('--saveModel', type=str, default="s2s.pt", help='Path to save model')
     parser.add_argument('--job_type', dest='mode', default="training", type=str, help='training/inference')
-    parser.add_argument("--enable_perf_log", action='store_true', default=False, help="If set, enable performance logging")
+    parser.add_argument("--enable_perf_log", action='store_true', default=True, help="If set, enable performance logging")
     parser.add_argument("--num_steps", dest='numBatches', type=int, default=1000, help="Number of training steps")
     parser.add_argument("--log_file", type=str, default="transformer.log", help="Log file name(default:vgg.log)")
     args = parser.parse_args()
@@ -422,7 +422,7 @@ if __name__ == '__main__':
             print("Model path not provided")
             exit()
         
-        logFile = 'inferS2S.log' if args.enable_perf_log else None
+        logFile = args.log_file if args.enable_perf_log else None
 
         model.load_state_dict(torch.load(saveModel))
         model = model.to(DEVICE)
