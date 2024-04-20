@@ -333,8 +333,8 @@ run the following
 if __name__ == '__main__':
 
     # Download spaCy models
-    subprocess.run(['python3', '-m', 'spacy', 'download', 'de_core_news_sm'], stdout=subprocess.DEVNULL)
-    subprocess.run(['python3', '-m', 'spacy', 'download', 'en_core_web_sm'], stdout=subprocess.DEVNULL)
+    # subprocess.run(['python3', '-m', 'spacy', 'download', 'de_core_news_sm'], stdout=subprocess.DEVNULL)
+    # subprocess.run(['python3', '-m', 'spacy', 'download', 'en_core_web_sm'], stdout=subprocess.DEVNULL)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpuIdx', type=int, default=0, help='Index of GPU to use')
