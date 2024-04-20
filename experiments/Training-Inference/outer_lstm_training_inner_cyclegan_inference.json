@@ -1,18 +1,18 @@
 {
     "lstm/outer_lstm_training.log": {
         "startStep": 2,
-        "endStep": 2014,
-        "numStep": 2012,
-        "duration": 38.292946338653564,
-        "thr": 52.54231372551901,
-        "lat": 0.019032279492372548
+        "endStep": 4998,
+        "numStep": 4996,
+        "duration": 99.12907290458679,
+        "thr": 50.39893800690262,
+        "lat": 0.01984168793126237
     },
     "cyclegan/inner_cyclegan_inference.log": {
-        "startStep": 114,
-        "endStep": 2124,
-        "numStep": 2010,
-        "duration": 101.79126262664795,
-        "thr": 19.74629205035327,
-        "lat": 0.050642419217237784
+        "startStep": 100,
+        "endStep": 2023,
+        "numStep": 1923,
+        "duration": 99.09137105941772,
+        "thr": 19.40633154472068,
+        "lat": 0.05152957413386257
     }
 }

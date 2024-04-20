@@ -1,18 +1,18 @@
 {
     "lstm/outer_lstm_training.log": {
         "startStep": 2,
-        "endStep": 2270,
-        "numStep": 2268,
-        "duration": 104.02662491798401,
-        "thr": 21.802110774891734,
-        "lat": 0.04586711857053968
+        "endStep": 2257,
+        "numStep": 2255,
+        "duration": 103.67517590522766,
+        "thr": 21.750626225716346,
+        "lat": 0.0459756877628504
     },
     "resnet50/inner_resnet50_inference.log": {
-        "startStep": 58,
+        "startStep": 61,
         "endStep": 1562,
-        "numStep": 1504,
-        "duration": 103.93106651306152,
-        "thr": 14.471130244881929,
-        "lat": 0.06910310273474836
+        "numStep": 1501,
+        "duration": 103.60863423347473,
+        "thr": 14.487209595076822,
+        "lat": 0.06902640521883727
     }
 }

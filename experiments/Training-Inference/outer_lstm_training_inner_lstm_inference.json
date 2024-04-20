@@ -1,18 +1,18 @@
 {
     "lstm/outer_lstm_training.log": {
         "startStep": 2,
-        "endStep": 756,
-        "numStep": 754,
-        "duration": 11.556014776229858,
-        "thr": 65.2474070516888,
-        "lat": 0.01532627954407143
+        "endStep": 730,
+        "numStep": 728,
+        "duration": 11.114659309387207,
+        "thr": 65.49908366378325,
+        "lat": 0.015267389161246163
     },
     "lstm/inner_lstm_inference.log": {
-        "startStep": 256,
+        "startStep": 464,
         "endStep": 4999,
-        "numStep": 4743,
-        "duration": 11.565735340118408,
-        "thr": 410.0906566267184,
-        "lat": 0.0024384852076994325
+        "numStep": 4535,
+        "duration": 11.112500190734863,
+        "thr": 408.09898062193895,
+        "lat": 0.0024503859295997494
     }
 }
