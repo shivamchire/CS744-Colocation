@@ -3,6 +3,7 @@ import argparse
 import time
 import math
 import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import torch
 import torch.nn as nn
 import torch.onnx

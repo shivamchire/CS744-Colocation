@@ -8,6 +8,7 @@ import time
 import sys
 from tqdm import tqdm
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import torch
 import torchvision.transforms as transforms
 from torchvision.utils import save_image, make_grid
