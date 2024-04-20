@@ -55,6 +55,10 @@ MODELS = {
             'dir': './s2s',
             'exe': 's2stransformer.py',
             'custArgs': "--gpuIdx 0 --alpha 0.0001 --saveModel s2s.pt".split(" ")
+        },
+        'dqn':{
+            'dir': './DQN',
+            'exe':'dqn.py'
         }
        }
 def _makeExec(model):
