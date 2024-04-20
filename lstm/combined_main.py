@@ -76,7 +76,7 @@ def train_model(args, model, corpus, device, num_steps):
         i = 0
         with tqdm(total=num_steps) as pbar:
             while i < num_steps:
-                epoch_start_time = time.time()
+                iteration_start_time = time.time()
                 model.train()
                 total_loss = 0.
                 start_time = time.time()
@@ -84,7 +84,11 @@ def train_model(args, model, corpus, device, num_steps):
                 if args.model != 'Transformer':
                     hidden = model.init_hidden(args.batch_size)
 
-                data_loader = tqdm(range(0, train_data.size(0) - 1, args.bptt))
+                while train_data.size(0) < num_steps * args.bptt:
+                    print("Appended train_data to itself")
+                    train_data = torch.cat([train_data, train_data], dim=0)
+
+                data_loader = tqdm(range(0, train_data.size(0) - 1, args.bptt))  
 
                 if args.enable_perf_log:
                     data_loader = PerformanceIterator(data_loader, None, None, None, args.log_file)
@@ -122,7 +126,7 @@ def train_model(args, model, corpus, device, num_steps):
                 val_loss = evaluate(args, val_data, model, corpus)
                 print('-' * 89)
                 print('| end of iteration {:5d} | time: {:5.2f}s | valid loss {:5.2f} | '
-                        'valid ppl {:8.2f}'.format(i, (time.time() - epoch_start_time),
+                        'valid ppl {:8.2f}'.format(i, (time.time() - iteration_start_time),
                                                 val_loss, math.exp(val_loss)))
                 print('-' * 89)
                 if not best_val_loss or val_loss < best_val_loss:
