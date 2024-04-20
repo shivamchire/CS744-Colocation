@@ -79,7 +79,7 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
                          'fastest way to use PyTorch for either single node or '
                          'multi node data parallel training')
 parser.add_argument('--dummy', action='store_true', help="use fake data to benchmark")
-parser.add_argument("--enable_perf_log", action='store_true', default=False, help="If set, enable performance logging")
+parser.add_argument("--enable_perf_log", action='store_true', default=True, help="If set, enable performance logging")
 parser.add_argument("--log_file", type=str, default="imagenet.log", help="Log file name(default:imagenet.log)")
 parser.add_argument("--num_steps", type=int, default=50, help="Number of training steps")
 parser.add_argument("--job_type", type=str, required=True, choices=['training', 'inference'], help="Specify 'training' or 'inference'")
