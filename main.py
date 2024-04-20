@@ -38,7 +38,7 @@ MODELS = {
         # 'resnet18': {
         #     'dir':'./imagenet',
         #     'exe':'main.py',
-        #     'custArgs':'-a resnet18 --dummy --log_file resnet18.log'.split(" ")
+        #     'custArgs':'-a resnet18 --dummy'.split(" ")
         # },
         'resnet50': {
             'dir':'./resnet50',
@@ -115,8 +115,19 @@ def main(args):
         childProcess.append(process)
         #time.sleep(20)
     if asy:
-        for p in childProcess:
-            p.wait()
+        #for p in childProcess:
+        #    p.wait()
+        oneModelComp = 0
+        while True:
+            for p in childProcess:
+                if p.poll() != None:
+                    for q in childProcess:
+                        q.kill()
+                    oneModelComp = 1
+                    break
+            if oneModelComp == 1:
+                break
+            time.sleep(5)
     # Read readings from output file and store it in dict
     # for m in model: run it async
     # Generate a JSON file contianing measurements
@@ -131,8 +142,8 @@ if __name__=='__main__':
     parser.add_argument('-c', '--colocate', type=int, default=1,
             help='Whether to run models listed by --model individually or\
             colocate them(default individually)')
-    parser.add_argument('-m', '--models', type=str, default='vgg,cyclegan',
-            help='Comma separated list of models to run. Supported: vgg,cyclegan.\
+    parser.add_argument('-m', '--models', type=str, default='resnet50,cyclegan',
+            help='Comma separated list of models to run. Supported: resnet50,cyclegan.\
             Default:vgg,cyclegan')
 #    parser.add_argument('-o', '--start_offset', type=int, default=30,
 #            help='Start time(in second) from which to start taking\
