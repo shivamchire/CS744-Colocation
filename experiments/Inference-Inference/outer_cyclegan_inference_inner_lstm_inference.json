@@ -1,0 +1,18 @@
+{
+    "cyclegan/outer_cyclegan_inference.log": {
+        "startStep": 79,
+        "endStep": 265,
+        "numStep": 186,
+        "duration": 8.710712909698486,
+        "thr": 21.353016903232806,
+        "lat": 0.04683178983708863
+    },
+    "lstm/inner_lstm_inference.log": {
+        "startStep": 2,
+        "endStep": 4999,
+        "numStep": 4997,
+        "duration": 8.772248268127441,
+        "thr": 569.6373207032682,
+        "lat": 0.0017555029553987275
+    }
+}

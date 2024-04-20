@@ -1,0 +1,18 @@
+{
+    "s2s/outer_s2s_inference.log": {
+        "startStep": 2,
+        "endStep": 1482,
+        "numStep": 1480,
+        "duration": 78.7625184059143,
+        "thr": 18.790663756745317,
+        "lat": 0.05321791784183399
+    },
+    "resnet50/inner_resnet50_inference.log": {
+        "startStep": 402,
+        "endStep": 1562,
+        "numStep": 1160,
+        "duration": 78.7306649684906,
+        "thr": 14.733776228922396,
+        "lat": 0.0678712629038712
+    }
+}

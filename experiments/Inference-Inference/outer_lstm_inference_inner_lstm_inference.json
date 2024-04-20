@@ -1,0 +1,18 @@
+{
+    "lstm/outer_lstm_inference.log": {
+        "startStep": 2,
+        "endStep": 4999,
+        "numStep": 4997,
+        "duration": 9.290897846221924,
+        "thr": 537.8382243253266,
+        "lat": 0.0018592951463321842
+    },
+    "lstm/inner_lstm_inference.log": {
+        "startStep": 4,
+        "endStep": 4728,
+        "numStep": 4724,
+        "duration": 9.28983449935913,
+        "thr": 508.5128266091167,
+        "lat": 0.0019665187339879616
+    }
+}

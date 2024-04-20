@@ -1,0 +1,18 @@
+{
+    "resnet50/outer_resnet50_inference.log": {
+        "startStep": 4,
+        "endStep": 1562,
+        "numStep": 1558,
+        "duration": 157.71383905410767,
+        "thr": 9.878651165580271,
+        "lat": 0.10122839477157103
+    },
+    "resnet50/inner_resnet50_inference.log": {
+        "startStep": 2,
+        "endStep": 1560,
+        "numStep": 1558,
+        "duration": 157.73611307144165,
+        "thr": 9.877256194935859,
+        "lat": 0.10124269131671479
+    }
+}
