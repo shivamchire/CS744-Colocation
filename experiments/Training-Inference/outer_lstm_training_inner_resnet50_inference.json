@@ -1,0 +1,18 @@
+{
+    "lstm/outer_lstm_training.log": {
+        "startStep": 2,
+        "endStep": 2270,
+        "numStep": 2268,
+        "duration": 104.02662491798401,
+        "thr": 21.802110774891734,
+        "lat": 0.04586711857053968
+    },
+    "resnet50/inner_resnet50_inference.log": {
+        "startStep": 58,
+        "endStep": 1562,
+        "numStep": 1504,
+        "duration": 103.93106651306152,
+        "thr": 14.471130244881929,
+        "lat": 0.06910310273474836
+    }
+}

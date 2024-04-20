@@ -1,0 +1,18 @@
+{
+    "s2s/outer_s2s_training.log": {
+        "startStep": 2,
+        "endStep": 520,
+        "numStep": 518,
+        "duration": 74.71155667304993,
+        "thr": 6.93333164328048,
+        "lat": 0.14423080438812727
+    },
+    "resnet50/inner_resnet50_inference.log": {
+        "startStep": 453,
+        "endStep": 1562,
+        "numStep": 1109,
+        "duration": 74.73863625526428,
+        "thr": 14.83837618085902,
+        "lat": 0.0673928189858109
+    }
+}

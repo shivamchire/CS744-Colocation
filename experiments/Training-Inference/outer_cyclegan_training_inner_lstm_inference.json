@@ -1,0 +1,18 @@
+{
+    "cyclegan/outer_cyclegan_training.log": {
+        "startStep": 13,
+        "endStep": 42,
+        "numStep": 29,
+        "duration": 10.210203886032104,
+        "thr": 2.8402958769190647,
+        "lat": 0.35207599607007256
+    },
+    "lstm/inner_lstm_inference.log": {
+        "startStep": 2,
+        "endStep": 4999,
+        "numStep": 4997,
+        "duration": 10.48285722732544,
+        "thr": 476.6830160554345,
+        "lat": 0.002097830143551219
+    }
+}

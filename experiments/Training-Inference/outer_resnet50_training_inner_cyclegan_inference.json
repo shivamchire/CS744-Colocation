@@ -1,0 +1,18 @@
+{
+    "resnet50/outer_resnet50_training.log": {
+        "startStep": 2,
+        "endStep": 1626,
+        "numStep": 1624,
+        "duration": 372.0408799648285,
+        "thr": 4.365111705341433,
+        "lat": 0.22908921180100278
+    },
+    "cyclegan/inner_cyclegan_inference.log": {
+        "startStep": 37,
+        "endStep": 4998,
+        "numStep": 4961,
+        "duration": 372.2032513618469,
+        "thr": 13.328739020544011,
+        "lat": 0.07502585191732451
+    }
+}

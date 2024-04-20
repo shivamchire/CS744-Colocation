@@ -5,7 +5,7 @@ model=('cyclegan' 'lstm' 'resnet50' 's2s')
 outer_job_type=('training' 'training' 'training' 'training' )
 inner_job_type=('inference' 'inference' 'inference' 'inference' )
 batch_size=(1 20 32 32 )
-num_steps=(50 50 50 50 )
+num_steps=(5000 5000 5000 5000 )
 outer_log_file=()
 inner_log_file=()
 
@@ -25,3 +25,5 @@ for (( i=0; i<${#model[@]}; i++ )); do
         python3 parse_log.py -l "${model[i]}/${outer_log_file[i]},${model[j]}/${inner_log_file[j]}" --output "outer_${model[i]}_${outer_job_type[i]}_inner_${model[j]}_${inner_job_type[j]}.json"
     done
 done
+
+echo "Completed Experiments"

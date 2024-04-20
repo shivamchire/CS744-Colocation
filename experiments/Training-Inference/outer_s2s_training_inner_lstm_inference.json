@@ -1,0 +1,18 @@
+{
+    "s2s/outer_s2s_training.log": {
+        "startStep": 2838,
+        "endStep": 2835,
+        "numStep": -3,
+        "duration": -0.2708859443664551,
+        "thr": 11.074771734710582,
+        "lat": 0.09029531478881836
+    },
+    "lstm/inner_lstm_inference.log": {
+        "startStep": 2,
+        "endStep": 0,
+        "numStep": -2,
+        "duration": -0.8633010387420654,
+        "thr": 2.3166889766682583,
+        "lat": 0.4316505193710327
+    }
+}
