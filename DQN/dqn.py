@@ -139,36 +139,42 @@ def linear_schedule(start_e: float, end_e: float, duration: int, t: int):
     return max(slope * t + start_e, end_e)
 
 
-if __name__ == "__main__":
-    import stable_baselines3 as sb3
+import stable_baselines3 as sb3
 
-    if sb3.__version__ < "2.0":
-        raise ValueError(
-            """Ongoing migration: run the following command to install the new dependencies:
+if sb3.__version__ < "2.0":
+    raise ValueError(
+        """Ongoing migration: run the following command to install the new dependencies:
 
 poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-license]==0.28.1"  "ale-py==0.8.1" 
 """
-        )
-    args = tyro.cli(Args)
-    assert args.num_envs == 1, "vectorized envs are not supported at the moment"
-    run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
-    if args.track:
-        import wandb
-
-        wandb.init(
-            project=args.wandb_project_name,
-            entity=args.wandb_entity,
-            sync_tensorboard=True,
-            config=vars(args),
-            name=run_name,
-            monitor_gym=True,
-            save_code=True,
-        )
-    writer = SummaryWriter(f"runs/{run_name}")
-    writer.add_text(
-        "hyperparameters",
-        "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
     )
+args = tyro.cli(Args)
+assert args.num_envs == 1, "vectorized envs are not supported at the moment"
+run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
+if args.track:
+    import wandb
+
+    wandb.init(
+        project=args.wandb_project_name,
+        entity=args.wandb_entity,
+        sync_tensorboard=True,
+        config=vars(args),
+        name=run_name,
+        monitor_gym=True,
+        save_code=True,
+    )
+writer = SummaryWriter(f"runs/{run_name}")
+writer.add_text(
+    "hyperparameters",
+    "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
+)
+
+# init logging
+_logger = logging.getLogger()
+logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.INFO, filemode='w')
+
+if __name__ == "__main__":
+    
 
     # TRY NOT TO MODIFY: seeding
     random.seed(args.seed)
@@ -201,8 +207,8 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
 
     if args.job_type == "training":
         # init logging
-        logger = logging.getLogger()
-        logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.DEBUG, filemode='w')
+        # _logger = logging.getLogger()
+        # logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.DEBUG, filemode='w')
 
         # TRY NOT TO MODIFY: start the game
         obs, _ = envs.reset(seed=args.seed)
@@ -273,10 +279,10 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
             # end time for this step and logging
             end_time = time.time()
             duration = end_time - start_time
-            logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'STEPS', global_step))
-            logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'DURATION', duration))
+            _logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'STEPS', global_step))
+            _logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'DURATION', duration))
         
-        logger.info('[{0}][{1}][{2}][]'.format(time.time(),'PROGRESS', 'COMPLETE'))
+        _logger.info('[{0}][{1}][{2}][]'.format(time.time(),'PROGRESS', 'COMPLETE'))
 
 
 
@@ -312,8 +318,8 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
     else:
 
         # init logging
-        logger = logging.getLogger()
-        logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.DEBUG, filemode='w')
+        # _logger = logging.getLogger()
+        # logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.DEBUG, filemode='w')
 
         # Inference
         obs, _ = envs.reset(seed=args.seed)
@@ -333,7 +339,7 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
             # end time for this step and logging
             end_time = time.time()
             duration = end_time - start_time
-            logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'STEPS', global_step))
-            logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'DURATION', duration))
+            _logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'STEPS', global_step))
+            _logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'DURATION', duration))
         
-        logger.info('[{0}][{1}][{2}][]'.format(time.time(),'PROGRESS', 'COMPLETE'))
+        _logger.info('[{0}][{1}][{2}][]'.format(time.time(),'PROGRESS', 'COMPLETE'))
