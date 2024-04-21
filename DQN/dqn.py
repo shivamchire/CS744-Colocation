@@ -2,6 +2,7 @@
 import os
 import random
 import time
+import logging
 from dataclasses import dataclass
 
 import gymnasium as gym
@@ -47,6 +48,11 @@ class Args:
     """whether to upload the saved model to huggingface"""
     hf_entity: str = ""
     """the user or org name of the model repository from the Hugging Face Hub"""
+    log_file: str = "dqn.log"
+    """the log file for the experiment (default:vgg.log)""" 
+    enable_perf_log: bool = True
+    """whether to enable performance logging"""
+
 
     # Algorithm specific arguments
     env_id: str = "BreakoutNoFrameskip-v4"
@@ -76,7 +82,7 @@ class Args:
     """the ending epsilon for exploration"""
     exploration_fraction: float = 0.10
     """the fraction of `total-timesteps` it takes from start-e to go end-e"""
-    learning_starts: int = 80000
+    learning_starts: int = 40
     """timestep to start learning"""
     train_frequency: int = 4
     """the frequency of training"""
@@ -194,9 +200,17 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
     start_time = time.time()
 
     if args.job_type == "training":
+        # init logging
+        logger = logging.getLogger()
+        logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.DEBUG, filemode='w')
+
         # TRY NOT TO MODIFY: start the game
         obs, _ = envs.reset(seed=args.seed)
         for global_step in range(args.num_steps):
+            # start time for this step
+            start_time = time.time()
+
+
             # ALGO LOGIC: put action logic here
             epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.num_steps, global_step)
             if random.random() < epsilon:
@@ -228,6 +242,8 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
 
             # ALGO LOGIC: training.
             if global_step > args.learning_starts:
+                
+
                 if global_step % args.train_frequency == 0:
                     data = rb.sample(args.batch_size)
                     with torch.no_grad():
@@ -253,6 +269,16 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
                         target_network_param.data.copy_(
                             args.tau * q_network_param.data + (1.0 - args.tau) * target_network_param.data
                         )
+
+            # end time for this step and logging
+            end_time = time.time()
+            duration = end_time - start_time
+            logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'STEPS', global_step))
+            logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'DURATION', duration))
+        
+        logger.info('[{0}][{1}][{2}][]'.format(time.time(),'PROGRESS', 'COMPLETE'))
+
+
 
         if args.save_model:
             model_path = f"runs/{run_name}/{args.exp_name}.cleanrl_model"
@@ -284,9 +310,17 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
         writer.close()
 
     else:
+
+        # init logging
+        logger = logging.getLogger()
+        logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.DEBUG, filemode='w')
+
         # Inference
         obs, _ = envs.reset(seed=args.seed)
         for global_step in range(args.num_steps):
+            # start time for this step
+            start_time = time.time()
+
             q_values = q_network(torch.Tensor(obs).to(device))
             actions = torch.argmax(q_values, dim=1).cpu().numpy()
 
@@ -295,3 +329,11 @@ poetry run pip install "stable_baselines3==2.0.0a1" "gymnasium[atari,accept-rom-
 
             # TRY NOT TO MODIFY: CRUCIAL step easy to overlook
             obs = next_obs
+
+            # end time for this step and logging
+            end_time = time.time()
+            duration = end_time - start_time
+            logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'STEPS', global_step))
+            logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'DURATION', duration))
+        
+        logger.info('[{0}][{1}][{2}][]'.format(time.time(),'PROGRESS', 'COMPLETE'))
