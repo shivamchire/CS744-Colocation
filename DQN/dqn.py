@@ -73,7 +73,7 @@ class Args:
     """the discount factor gamma"""
     tau: float = 1.0
     """the target network update rate"""
-    target_network_frequency: int = 1000
+    target_network_frequency: int = 100
     """the timesteps it takes to update the target network"""
 
     start_e: float = 1
@@ -117,6 +117,26 @@ def make_env(env_id, seed, idx, capture_video, run_name):
 class QNetwork(nn.Module):
     def __init__(self, env):
         super().__init__()
+
+        self.network = nn.Sequential(
+            nn.Conv2d(4, 64, 8, stride=4),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, 4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(128, 256, 3, stride=1),  # Adjust kernel size here
+            nn.ReLU(),
+            nn.Conv2d(256, 512, 3, stride=1),  # Adjust kernel size here
+            nn.ReLU(),
+            nn.Conv2d(512, 512, 3, stride=1),  # Adjust kernel size here
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(512 * 3 * 3, 1024),  # Adjust input size based on the output shape of the last conv layer
+            nn.ReLU(),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, env.single_action_space.n),
+        )
+        '''
         self.network = nn.Sequential(
             nn.Conv2d(4, 32, 8, stride=4),
             nn.ReLU(),
@@ -129,6 +149,7 @@ class QNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(512, env.single_action_space.n),
         )
+        '''
 
     def forward(self, x):
         return self.network(x / 255.0)
@@ -203,7 +224,6 @@ if __name__ == "__main__":
         optimize_memory_usage=True,
         handle_timeout_termination=False,
     )
-    start_time = time.time()
 
     if args.job_type == "training":
         # init logging
@@ -212,11 +232,10 @@ if __name__ == "__main__":
 
         # TRY NOT TO MODIFY: start the game
         obs, _ = envs.reset(seed=args.seed)
+
+        duration = 0
+        start_time = time.time()
         for global_step in range(args.num_steps):
-            # start time for this step
-            start_time = time.time()
-
-
             # ALGO LOGIC: put action logic here
             epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.num_steps, global_step)
             if random.random() < epsilon:
@@ -232,7 +251,7 @@ if __name__ == "__main__":
             if "final_info" in infos:
                 for info in infos["final_info"]:
                     if info and "episode" in info:
-                        print(f"global_step={global_step}, episodic_return={info['episode']['r']}")
+                        # print(f"global_step={global_step}, episodic_return={info['episode']['r']}")
                         writer.add_scalar("charts/episodic_return", info["episode"]["r"], global_step)
                         writer.add_scalar("charts/episodic_length", info["episode"]["l"], global_step)
 
@@ -261,7 +280,7 @@ if __name__ == "__main__":
                     if global_step % 100 == 0:
                         writer.add_scalar("losses/td_loss", loss, global_step)
                         writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
-                        print("SPS:", int(global_step / (time.time() - start_time)))
+                        # print("SPS:", int(global_step / (time.time() - start_time)))
                         writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
                     # optimize the model
@@ -278,7 +297,9 @@ if __name__ == "__main__":
 
             # end time for this step and logging
             end_time = time.time()
-            duration = end_time - start_time
+            elapsed_time = end_time - start_time
+            duration += elapsed_time
+            start_time = end_time
             _logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'STEPS', global_step))
             _logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'DURATION', duration))
         
@@ -323,9 +344,11 @@ if __name__ == "__main__":
 
         # Inference
         obs, _ = envs.reset(seed=args.seed)
+
+        duration = 0
+        start_time = time.time()
         for global_step in range(args.num_steps):
             # start time for this step
-            start_time = time.time()
 
             q_values = q_network(torch.Tensor(obs).to(device))
             actions = torch.argmax(q_values, dim=1).cpu().numpy()
@@ -338,7 +361,9 @@ if __name__ == "__main__":
 
             # end time for this step and logging
             end_time = time.time()
-            duration = end_time - start_time
+            elapsed_time = end_time - start_time
+            duration += elapsed_time
+            start_time = end_time
             _logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'STEPS', global_step))
             _logger.info('[{0}][{1}][{2}][{3}]'.format(time.time(),'PROGRESS', 'DURATION', duration))
         
