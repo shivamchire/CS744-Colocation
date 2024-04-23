@@ -1,0 +1,26 @@
+{
+    "/users/hshivam/CS744-Colocation/v100_lat_exp6/3_i.log": {
+        "startStep": 8,
+        "endStep": 1000,
+        "numStep": 992,
+        "duration": 101.72482419013977,
+        "thr": 9.751798618455169,
+        "lat": 0.10254518567554412
+    },
+    "/users/hshivam/CS744-Colocation/v100_lat_exp6/3_t1.log": {
+        "startStep": 3,
+        "endStep": 336,
+        "numStep": 333,
+        "duration": 101.4633047580719,
+        "thr": 3.2819747079399977,
+        "lat": 0.3046946088830988
+    },
+    "/users/hshivam/CS744-Colocation/v100_lat_exp6/3_t2.log": {
+        "startStep": 2,
+        "endStep": 323,
+        "numStep": 321,
+        "duration": 101.86496710777283,
+        "thr": 3.1512305860795395,
+        "lat": 0.3173363461301334
+    }
+}

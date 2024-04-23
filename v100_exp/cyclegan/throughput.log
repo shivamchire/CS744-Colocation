@@ -1,0 +1,18 @@
+{
+    "v100_exp/cyclegan/cg1.log": {
+        "startStep": 2,
+        "endStep": 98,
+        "numStep": 96,
+        "duration": 41.6060836315155,
+        "thr": 2.307354877479565,
+        "lat": 0.43339670449495316
+    },
+    "v100_exp/cyclegan/cg2.log": {
+        "startStep": 3,
+        "endStep": 98,
+        "numStep": 95,
+        "duration": 41.14513635635376,
+        "thr": 2.3088998703811514,
+        "lat": 0.4331066984879343
+    }
+}

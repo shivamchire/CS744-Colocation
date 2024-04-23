@@ -1,0 +1,10 @@
+{
+    "/users/hshivam/CS744-Colocation/v100_lat_exp5/1_i.log": {
+        "startStep": 2,
+        "endStep": 1000,
+        "numStep": 998,
+        "duration": 28.695218324661255,
+        "thr": 34.77931370685194,
+        "lat": 0.028752723772205665
+    }
+}
