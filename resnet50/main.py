@@ -88,6 +88,16 @@ parser.add_argument("--job_type", type=str, default='training', choices=['traini
 best_acc1 = 0
 num_steps_complete_flag = 0
 
+def getModelSize(model):
+    param_size = 0
+    for param in model.parameters():
+        param_size += param.nelement() * param.element_size()
+    buffer_size = 0
+    for buffer in model.buffers():
+        buffer_size += buffer.nelement() * buffer.element_size()
+    
+    size_all_mb = (param_size + buffer_size) / 1024**2
+    return size_all_mb
 
 def main():
     args = parser.parse_args()
@@ -156,6 +166,8 @@ def main_worker(gpu, ngpus_per_node, args):
     else:
         print("=> creating model '{}'".format(args.arch))
         model = models.__dict__[args.arch]()
+    #print("Model size: " + getModelSize(model))
+    #exit()
 
     if not torch.cuda.is_available() and not torch.backends.mps.is_available():
         print('using CPU, this will be slow')

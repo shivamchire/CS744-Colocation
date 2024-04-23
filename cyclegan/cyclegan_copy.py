@@ -20,6 +20,16 @@ from datasets import *
 from utils import *
 from performance_iterator import PerformanceIterator
 
+def getModelSize(model):
+    param_size = 0
+    for param in model.parameters():
+        param_size += param.nelement() * param.element_size()
+    buffer_size = 0
+    for buffer in model.buffers():
+        buffer_size += buffer.nelement() * buffer.element_size()
+
+    size_all_mb = (param_size + buffer_size) / 1024**2
+    return size_all_mb
 
 def train(opt):
     print(opt)
@@ -42,6 +52,8 @@ def train(opt):
     G_BA = GeneratorResNet(input_shape, opt.n_residual_blocks)
     D_A = Discriminator(input_shape)
     D_B = Discriminator(input_shape)
+    #print("Model size: " + str(getModelSize(G_AB.model)+getModelSize(G_BA.model)+getModelSize(D_A.model)+getModelSize(D_B.model)))
+    #exit()
 
     if cuda:
         G_AB = G_AB.cuda()

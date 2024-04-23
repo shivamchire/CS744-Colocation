@@ -58,7 +58,8 @@ MODELS = {
         },
         'dqn':{
             'dir': './DQN',
-            'exe':'dqn.py'
+            'exe':'dqn.py',
+            'custArgs':'',
         }
        }
 def _makeExec(model):
