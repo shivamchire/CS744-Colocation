@@ -30,11 +30,13 @@ def generate_heatmap(df, column1, column2, title, filename):
     df_min_values = df_min_values.astype(float)
 
     # Create a mask for the lower triangle excluding the diagonal
+    # comment it out if the entire matrix is needed
     mask = np.tril(np.ones_like(df_min_values, dtype=bool), k=-1)
 
     # Plot the heatmap with the 'Paired' colormap and square cells
     plt.figure(figsize=(12, 10))
     # invert the colormap as needed in tput vs latency by adding _r at the end of cmap name
+    # make sure to remove the mask if the entire matrix is needed
     sns.heatmap(df_min_values, mask=mask, annot=False, cmap='coolwarm', linewidths=5, cbar=False, square=True)
 
     # Set the background color to light grey
