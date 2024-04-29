@@ -67,6 +67,7 @@ def generate_heatmap(df, column1, column2, title, filename):
     plt.show()
 
 # Read the CSV file
+# Create a cleaner sheet with Model 1, Model 2, tput 1, tput 2, latency 1, latency 2 data for this
 df = pd.read_csv("CS744-Readings - inf-inf heatmap.csv", sep=r'\s*,\s*', engine='python')
 
 # Generate the throughput heatmap
