@@ -23,6 +23,7 @@ def generate_heatmap(df, column1, column2, title, filename):
             continue  # Skip to the next iteration
 
         df_tuples.loc[model1, model2] = f"({value1}, {value2})"
+        # change this to whatever criterion is needed
         df_min_values.loc[model1, model2] = min(float(value1), float(value2))
 
     # Convert the minimum values to numbers
@@ -33,6 +34,7 @@ def generate_heatmap(df, column1, column2, title, filename):
 
     # Plot the heatmap with the 'Paired' colormap and square cells
     plt.figure(figsize=(12, 10))
+    # invert the colormap as needed in tput vs latency by adding _r at the end of cmap name
     sns.heatmap(df_min_values, mask=mask, annot=False, cmap='coolwarm', linewidths=5, cbar=False, square=True)
 
     # Set the background color to light grey
